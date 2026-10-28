@@ -1,0 +1,6 @@
+Climate Custody
+Copyright 2026 Embryo Space Inc. (DBA BSVKey)
+
+lib/canonical.mjs, lib/keys.mjs, lib/merkle.mjs and lib/record.mjs are copied unmodified from
+BSVKey/finance-custody (lib/canonical.mjs, lib/keys.mjs and lib/merkle.mjs originally from
+BSVKey/dtn-custody-demo), Copyright 2026 Embryo Space Inc., Apache-2.0.
