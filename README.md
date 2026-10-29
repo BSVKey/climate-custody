@@ -103,6 +103,41 @@ oil and gas flaring), metered renewable energy, metered storage for removals, se
 cookstoves. Physical samples (soil cores, biochar batches) would add a chain-of-custody record
 like the BSVKey pharma core; not built here.
 
+## Hourly energy certificates
+
+`src/granular.mjs` checks hourly (granular) clean-energy certificates against a meter's signed
+readings. Hourly certificate registries, such as EnergyTag-style Granular Certificates (for
+example the open-source Future Energy Associates registry) and Energinet's Project Origin,
+issue certificates from metered production, but take the meter data on trust: an uploaded file
+or the issuing body's word. Here the meter signs each window of 15-minute Wh readings when it
+closes (`climate.window/1`, salted Merkle root, chained), and anyone holding the readings can
+check every certificate:
+
+- more energy certified for a device and hour than the signed meter recorded
+- certificate ids issued twice, or a bundle whose id range does not match its quantity
+- an hour certified with no signed meter data behind it
+- meter data back-filled (signed long after the hour), edited after signing, signed by an
+  unregistered key, missing without a signed gap record, or with a broken window chain
+
+```
+node granular-demo.mjs
+```
+
+```
+hour (UTC)  certified kWh  metered kWh  status
+11:00         4,862.9      4,502.7  over_issued       issued from a forecast, +8%
+16:00         3,092.1            0  not_metered       meter data signed 17 h late
+21:00             150            0  not_metered       no meter data at all
+Certified 37,389.8 kWh; supported by signed meter data 33,394.4 kWh; unsupported 3,995.3 kWh
+```
+
+Adapters: `fromEnergyTagBundle` reads a GranularCertificateBundle (`face_value` Wh x
+`bundle_quantity`, id range, production interval); `fromProjectOriginIssued` reads a Project
+Origin `IssuedEvent` with the quantity from its commitment opening, which the auditor must be
+given. That adapter does not check the opening against the commitment; that needs Project
+Origin's own library. Withdrawn certificates are ignored; claimed (Cancelled) ones still count.
+One 15-minute reading can be proven to a buyer without showing the rest of the day.
+
 ## Production notes
 
 The demo signs with Ed25519 via `node:crypto` so it runs with zero dependencies. Production signs

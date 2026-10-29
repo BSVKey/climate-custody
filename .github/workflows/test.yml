@@ -15,3 +15,4 @@ jobs:
           node-version: ${{ matrix.node }}
       - run: node --test
       - run: node demo.mjs
+      - run: node granular-demo.mjs

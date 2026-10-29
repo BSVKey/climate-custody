@@ -3,10 +3,11 @@
   "version": "0.1.0",
   "private": true,
   "type": "module",
-  "description": "Proof of measurement for climate money: signed meter windows, calibration, claims re-derived from readings, double-counting checks. Evidence only.",
+  "description": "Proof of measurement for climate money: signed meter windows, calibration, claims re-derived from readings, double-counting checks, hourly energy certificates checked against signed meter data. Evidence only.",
   "scripts": {
     "demo": "node demo.mjs",
-    "test": "node --test"
+    "test": "node --test",
+    "demo:granular": "node granular-demo.mjs"
   },
   "engines": {
     "node": ">=18"

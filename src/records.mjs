@@ -34,9 +34,11 @@ const saltedLeaf = (salt, s) => leafHash(Buffer.from(`${salt}|${s}`, "utf8"));
 export const readingKey = (r) => `${r.t}|${r.ch4Bp}|${r.flowL}|${r.flareC}`;
 
 // Commit one window of readings. Returns the root plus the disclosure package.
-export function commitReadings(readings, { saltOf = randomSalt } = {}) {
+// keyOf turns a reading into its leaf text; the default is the flare reading above, and
+// src/granular.mjs passes energyKey for metered energy.
+export function commitReadings(readings, { saltOf = randomSalt, keyOf = readingKey } = {}) {
   const entries = readings.map((r) => {
-    const key = readingKey(r);
+    const key = keyOf(r);
     const salt = saltOf(key);
     if (!SALT_RE.test(salt)) throw new Error("salt must be 32 lowercase hex characters");
     return { r, key, salt, leaf: saltedLeaf(salt, key) };
@@ -48,17 +50,17 @@ export function commitReadings(readings, { saltOf = randomSalt } = {}) {
 }
 
 // Recompute a window root from a disclosure package (readings with their salts).
-export function rootOfPackage(pkg) {
-  const leaves = pkg.map((p) => saltedLeaf(p.salt, readingKey(p))).sort();
+export function rootOfPackage(pkg, keyOf = readingKey) {
+  const leaves = pkg.map((p) => saltedLeaf(p.salt, keyOf(p))).sort();
   return leaves.length ? buildTree(leaves).root : null;
 }
 
-export function readingProof(c, r) {
-  const i = c.keys.indexOf(readingKey(r));
+export function readingProof(c, r, keyOf = readingKey) {
+  const i = c.keys.indexOf(keyOf(r));
   return i < 0 ? null : { index: i, salt: c.package[i].salt, branch: proof(c.tree, i) };
 }
-export const readingIncluded = (win, r, p) =>
-  !!p && SALT_RE.test(p.salt) && p.index >= 0 && p.index < win.count && verifyProof(saltedLeaf(p.salt, readingKey(r)), p.branch, p.index, win.readingsRoot);
+export const readingIncluded = (win, r, p, keyOf = readingKey) =>
+  !!p && SALT_RE.test(p.salt) && p.index >= 0 && p.index < win.count && verifyProof(saltedLeaf(p.salt, keyOf(r)), p.branch, p.index, win.readingsRoot);
 
 export const window = (kp, { device, project, from, to, intervalMs, seq, prev, c, recordedAt }) =>
   signRecord(kp, { kind: "climate.window/1", device, project, from, to, intervalMs, expected: Math.round((to - from) / intervalMs), seq, prev, readingsRoot: c.root, count: c.count, scheme: c.scheme, recordedAt });
